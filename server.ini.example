@@ -1,0 +1,10 @@
+[moses-path]
+path/to/moses
+
+[translation-pair]
+pair-name
+path/to/moses.ini
+
+[translation-pair]
+another-pair-name
+path/to/another/moses.ini
