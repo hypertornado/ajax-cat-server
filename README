@@ -15,7 +15,7 @@ INSTALLATION
 
 3) Create program with 'make'
 
-4) Change configuration file
+4) Change configuration file server.ini (example shown in server.ini.example)
 	[moses-path]
 		absolute path to moses program
 	

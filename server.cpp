@@ -677,6 +677,8 @@ int main (){
 
 	Logger::clear_logs();
 	Logger::log("Starting server.");
+
+	system("mkdir tmp");
 	
 	fstream file;
 	file.open("server.ini",ios::in|ios::out);
