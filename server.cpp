@@ -163,6 +163,9 @@ public:
 	
 	virtual void process_line(Line l) = 0;
 	virtual string get_result() = 0;
+	
+	~Request(){
+	}
 };
 
 class RawRequest : public Request {
@@ -179,6 +182,10 @@ public:
 	virtual string get_result(){
 		return result;
 	}
+	
+	~RawRequest(){
+	}
+	
 };
 
 class SimpleRequest : public Request {
@@ -197,6 +204,10 @@ public:
 	virtual string get_result(){
 		return result;
 	}
+	
+	~SimpleRequest(){	
+	}
+	
 };
 
 class SuggestionRequest : public Request {
@@ -275,6 +286,9 @@ public:
 		}
 		
 		return ret;
+	}
+	
+	~SuggestionRequest(){
 	}
 };
 
@@ -374,6 +388,7 @@ public:
 		string phrase_str = p->get_phrase_text();
 		for (int i = 0; i < max_size; ++i){
 			if (used_trans[i][p->s_s] != NULL && phrase_str.compare(used_trans[i][p->s_s]->get_phrase_text()) == 0){
+				delete p;
 				return false;
 			}
 			bool can_place = true;
@@ -391,6 +406,7 @@ public:
 				return true;
 			}
 		}
+		delete p;
 		return true;
 	}
 	
@@ -498,6 +514,7 @@ public:
 		return table->get_result_table();
 	}
 	~TableRequest(){
+		cout << "deleting table" << endl;
 		delete table;
 	}
 };
@@ -595,7 +612,7 @@ answer_to_connection (void *cls, struct MHD_Connection *connection, const char *
 	
 	cout << "Request " << url << endl;
 	
-	const char *page = NULL;
+	string page = "";
 	Request *req = NULL;
 	const char * sentence  = MHD_lookup_connection_value (connection, MHD_GET_ARGUMENT_KIND, "q");
 	const char * covered  = MHD_lookup_connection_value (connection, MHD_GET_ARGUMENT_KIND, "covered");
@@ -620,17 +637,17 @@ answer_to_connection (void *cls, struct MHD_Connection *connection, const char *
 	if(status_code == 200 && strcmp(url,"/raw") == 0){
 		log = "raw " + string(sentence);
 		req = new RawRequest(sentence);
-		page = strdup(moses->get_translation(req).c_str());
+		page = moses->get_translation(req);
 		delete dynamic_cast<RawRequest*> (req);
 	}else if(status_code == 200 && strcmp(url,"/simple") == 0){
 		log = "simple " + string(sentence);
 		req = new SimpleRequest(sentence);
-		page = strdup(moses->get_translation(req).c_str());
+		page = moses->get_translation(req).c_str();
 		delete dynamic_cast<SimpleRequest*> (req);
 	}else if(status_code == 200 && strcmp(url,"/table") == 0){
 		log = "table " + string(sentence);
 		req = new TableRequest(sentence);
-		page = strdup(moses->get_translation(req).c_str());
+		page = moses->get_translation(req).c_str();
 		delete dynamic_cast<TableRequest*> (req);
 	}else if(status_code == 200 && strcmp(url,"/suggestion") == 0){
 		req = new SuggestionRequest(translated, covered, sentence);
@@ -638,7 +655,7 @@ answer_to_connection (void *cls, struct MHD_Connection *connection, const char *
 		SuggestionRequest *sug_req = dynamic_cast<SuggestionRequest*>(req);
 		//TODO zkontrolovat
 		if(sug_req->is_input_correct()){
-			page = strdup(moses->get_translation(req).c_str());
+			page = moses->get_translation(req).c_str();
 		}else{
 			status_code = 400;
 		}
@@ -654,13 +671,17 @@ answer_to_connection (void *cls, struct MHD_Connection *connection, const char *
 	
 	Logger::log(log);
 	
+	
 	struct MHD_Response *response;
 	int ret;
-	response = MHD_create_response_from_data (strlen (page), (void *) page, MHD_NO, MHD_NO);
+	//response = MHD_create_response_from_data (strlen (page), (void *) page, MHD_YES, MHD_YES);
+	response = MHD_create_response_from_data (strlen(page.c_str()), strdup(page.c_str()), MHD_YES, 0);
 	ret = MHD_queue_response (connection, status_code, response);
 	MHD_destroy_response (response);
+	
 	return ret;
 }
+
 
 void close_program(){
 	for(int i = 0; i < serversOrder.size(); ++i){
@@ -672,9 +693,6 @@ void close_program(){
 }
 
 int main (){
-
-	//something();
-
 	Logger::clear_logs();
 	Logger::log("Starting server.");
 
