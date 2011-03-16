@@ -5,15 +5,14 @@
 #include <microhttpd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
+//#include <string.h>
 #include <queue>
-#include <string>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
 #include <sstream>
-#include <algorithm>
+//#include <algorithm>
 #include <iterator>
 #include <fstream>
 #include <vector>
@@ -21,11 +20,14 @@
 #include <deque>
 #include <list>
 #include <sstream>
-#include <string>
+//#include <string>
 #include <iomanip>
-#include <stdio.h>
 #include <map>
 #include <Util.h>
+
+#define PORT 8888
+#define MAX_SUGGESTIONS 5
+#define PERIOD_OF_CONTROL 60
 
 using namespace std;
 
@@ -35,7 +37,6 @@ map<string, MosesPair *> servers;
 vector<MosesPair *> serversOrder;
 string mosesPath = "moses";
 struct MHD_Daemon *serverDaemon;
-int port = 8888;
 
 vector<string> explode(const string& s, const char& ch) {
     string str = s + ch;
@@ -94,10 +95,11 @@ private:
 
 public:
 	static void log(string s){
-		std::ofstream outfile;
-		outfile.open("tmp/log.txt", std::ios_base::app);
-		outfile << timestr() << " " << s << endl; 
-		outfile.close();
+		//std::ofstream outfile;
+		//outfile.open("tmp/log.txt", std::ios_base::app);
+		//outfile << timestr() << " " << s << endl; 
+		//outfile.close();
+		cout << timestr() << " " << s << endl;
 	}
 	
 	static void error(string s){
@@ -215,12 +217,12 @@ private:
 	string covered, translated, to_translate;
 	int it;
 	int max_results;
-	string results[5];
+	string results[MAX_SUGGESTIONS];
 	int translated_size;
 public:
 	SuggestionRequest(string _translated, string _covered, string _sentence) : Request(""){
 		it = 0;
-		max_results = 5;
+		max_results = MAX_SUGGESTIONS;
 		
 		translated = _translated;
 		covered = _covered;
@@ -514,7 +516,6 @@ public:
 		return table->get_result_table();
 	}
 	~TableRequest(){
-		cout << "deleting table" << endl;
 		delete table;
 	}
 };
@@ -537,7 +538,7 @@ public:
 		name = _name;
 		path = _path;
 		
-		cout << "Starting thread " << name << endl;
+		Logger::log("Starting thread " + name);
 		
 		string str = "rm tmp/"+name+"_out.fifo; mkfifo tmp/"+name+"_out.fifo";
 		system(str.c_str());
@@ -567,7 +568,7 @@ public:
 		int i = -1;
 		Request *req = NULL;
 	
-		cout << "Thread " << moses->name << " ready." << endl;
+		Logger::log("Thread " + moses->name + " ready.");
 	
 		while(getline(file,line)){
 			Line l = Line(line);
@@ -610,7 +611,6 @@ static int
 answer_to_connection (void *cls, struct MHD_Connection *connection, const char *url, const char *method, const char *version, const char *upload_data,
 	size_t *upload_data_size, void **con_cls){
 	
-	cout << "Request " << url << endl;
 	
 	string page = "";
 	Request *req = NULL;
@@ -642,12 +642,12 @@ answer_to_connection (void *cls, struct MHD_Connection *connection, const char *
 	}else if(status_code == 200 && strcmp(url,"/simple") == 0){
 		log = "simple " + string(sentence);
 		req = new SimpleRequest(sentence);
-		page = moses->get_translation(req).c_str();
+		page = moses->get_translation(req);
 		delete dynamic_cast<SimpleRequest*> (req);
 	}else if(status_code == 200 && strcmp(url,"/table") == 0){
 		log = "table " + string(sentence);
 		req = new TableRequest(sentence);
-		page = moses->get_translation(req).c_str();
+		page = moses->get_translation(req);
 		delete dynamic_cast<TableRequest*> (req);
 	}else if(status_code == 200 && strcmp(url,"/suggestion") == 0){
 		req = new SuggestionRequest(translated, covered, sentence);
@@ -655,7 +655,7 @@ answer_to_connection (void *cls, struct MHD_Connection *connection, const char *
 		SuggestionRequest *sug_req = dynamic_cast<SuggestionRequest*>(req);
 		//TODO zkontrolovat
 		if(sug_req->is_input_correct()){
-			page = moses->get_translation(req).c_str();
+			page = moses->get_translation(req);
 		}else{
 			status_code = 400;
 		}
@@ -669,12 +669,11 @@ answer_to_connection (void *cls, struct MHD_Connection *connection, const char *
 		page = "{\"error_message\":\"bad request\"}";
 	}
 	
-	Logger::log(log);
+	//Logger::log(log);
 	
 	
 	struct MHD_Response *response;
 	int ret;
-	//response = MHD_create_response_from_data (strlen (page), (void *) page, MHD_YES, MHD_YES);
 	response = MHD_create_response_from_data (strlen(page.c_str()), strdup(page.c_str()), MHD_YES, 0);
 	ret = MHD_queue_response (connection, status_code, response);
 	MHD_destroy_response (response);
@@ -690,6 +689,24 @@ void close_program(){
 	Logger::log("Closing server.");
 	//MHD_stop_daemon (serverDaemon);
 	//pthread_exit(NULL);
+}
+
+
+static void *control_thread(void *threadid){
+	RawRequest * req;
+	while(true){
+		Logger::log("performing period check, if moses is running");
+		for(int i = 0; i < serversOrder.size(); ++i){
+			MosesPair *moses = serversOrder[i];
+			req = new RawRequest("xxx_sentence_to_check_if_all_moses_servers_are_running");
+			delete req;
+		}
+		sleep(PERIOD_OF_CONTROL);
+	}
+}
+
+void * uri_logger(void * cls, const char * uri){
+	Logger::log(uri);
 }
 
 int main (){
@@ -715,13 +732,21 @@ int main (){
 	}
 
 	file.close();
-
 	
-	serverDaemon = MHD_start_daemon (MHD_USE_THREAD_PER_CONNECTION | MHD_USE_DEBUG, port, NULL, NULL, &answer_to_connection, NULL, MHD_OPTION_END);
+	
+	serverDaemon = MHD_start_daemon (MHD_USE_THREAD_PER_CONNECTION | MHD_USE_DEBUG, PORT, NULL, NULL, &answer_to_connection, NULL,
+		MHD_OPTION_URI_LOG_CALLBACK,
+                uri_logger,
+                NULL, MHD_OPTION_END
+                );
 	if (NULL == serverDaemon){
 		close_program();
 		return 1;
 	}
+	
+	pthread_t c_thread;
+	long t = 0;
+	pthread_create(&c_thread, NULL, control_thread, (void *)t );
 	
 	getchar();
 	
