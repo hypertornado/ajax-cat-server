@@ -23,7 +23,9 @@
 //#include <string>
 #include <iomanip>
 #include <map>
-#include <Util.h>
+//#include <Util.h>
+#include <cstring>
+
 
 #define PORT 8888
 #define MAX_SUGGESTIONS 5
@@ -519,6 +521,7 @@ public:
 		delete table;
 	}
 };
+
 
 class MosesPair{
 private:
