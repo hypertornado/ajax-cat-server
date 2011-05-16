@@ -21,7 +21,6 @@
 #include <iomanip>
 #include <map>
 #include <cstring>
-#include "Logger.h"
 
 #define PORT 8888
 #define MAX_SUGGESTIONS 5
@@ -134,6 +133,29 @@ public:
 	
 	~Request(){
 	}
+};
+
+class Logger {
+private:
+	static string timestr(){
+		time_t rawtime;
+		struct tm * timeinfo;
+		char buffer [80];
+		time ( &rawtime );
+		timeinfo = localtime ( &rawtime );
+		strftime (buffer,80,"%x %X:",timeinfo);
+		return buffer;
+	}
+
+public:
+	static void log(string s){
+		cout << timestr() << " " << s << endl;
+	}
+
+	static void clear_logs(){
+		system("rm tmp/log.txt");
+	}
+
 };
 
 class RawRequest : public Request {
@@ -652,8 +674,6 @@ void close_program(){
 		delete serversOrder[i];
 	}
 	Logger::log("Closing server.");
-	//MHD_stop_daemon (serverDaemon);
-	//pthread_exit(NULL);
 }
 
 
@@ -675,7 +695,6 @@ void * uri_logger(void * cls, const char * uri){
 }
 
 int main (){
-
 	Logger::clear_logs();
 	Logger::log("Starting server.");
 
