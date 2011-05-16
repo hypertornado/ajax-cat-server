@@ -5,14 +5,12 @@
 #include <microhttpd.h>
 #include <stdlib.h>
 #include <stdio.h>
-//#include <string.h>
 #include <queue>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
 #include <sstream>
-//#include <algorithm>
 #include <iterator>
 #include <fstream>
 #include <vector>
@@ -20,12 +18,10 @@
 #include <deque>
 #include <list>
 #include <sstream>
-//#include <string>
 #include <iomanip>
 #include <map>
-//#include <Util.h>
 #include <cstring>
-
+#include "Logger.h"
 
 #define PORT 8888
 #define MAX_SUGGESTIONS 5
@@ -80,38 +76,6 @@ string clear_input(string s){
 	}
 	return s;
 }
-
-class Logger {
-private:
-	static string timestr() {
-		time_t rawtime;
-		struct tm * timeinfo;
-		char buffer [80];
-
-		time ( &rawtime );
-		timeinfo = localtime ( &rawtime );
-
-		strftime (buffer,80,"%x %X:",timeinfo);
-		return buffer;
-	}
-
-public:
-	static void log(string s){
-		//std::ofstream outfile;
-		//outfile.open("tmp/log.txt", std::ios_base::app);
-		//outfile << timestr() << " " << s << endl; 
-		//outfile.close();
-		cout << timestr() << " " << s << endl;
-	}
-	
-	static void error(string s){
-	
-	}
-	
-	static void clear_logs(){
-		system("rm tmp/log.txt");
-	}
-};
 
 class Line {
 private:
@@ -672,8 +636,6 @@ answer_to_connection (void *cls, struct MHD_Connection *connection, const char *
 		page = "{\"error_message\":\"bad request\"}";
 	}
 	
-	//Logger::log(log);
-	
 	
 	struct MHD_Response *response;
 	int ret;
@@ -713,6 +675,7 @@ void * uri_logger(void * cls, const char * uri){
 }
 
 int main (){
+
 	Logger::clear_logs();
 	Logger::log("Starting server.");
 
