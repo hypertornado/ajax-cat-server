@@ -682,6 +682,7 @@ static void *control_thread(void *threadid){
 		for(int i = 0; i < serversOrder.size(); ++i){
 			MosesPair *moses = serversOrder[i];
 			req = new RawRequest("xxx_sentence_to_check_if_all_moses_servers_are_running");
+			moses->get_translation(req);
 			delete req;
 		}
 		sleep(PERIOD_OF_CONTROL);
