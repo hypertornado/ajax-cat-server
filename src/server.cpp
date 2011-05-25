@@ -256,11 +256,6 @@ public:
 		return ret;
 	}
 	
-	bool is_input_correct(){
-		//TODO zkontrolovat
-		return true;
-	}
-	
 	static string get_suffix(vector<string> result, int prefix_size, int max_words){
 		string ret = "";
 		int max = result.size();
@@ -556,18 +551,25 @@ public:
 	
 		string line, out;
 		int i = -1;
+		int last_output = 0;
 		Request *req = NULL;
 	
 		Logger::log("Thread " + moses->name + " ready.");
 	
 		while(getline(file,line)){
 			Line l = Line(line);
+			//Moses is outputing different request
 			if(l.order != i){
 				if(i % 2 == 0){
 					req->unlock();
 					req = NULL;
 				}else{
 					pthread_mutex_lock(&moses->queue_mutex);
+					//this happens when Moses outputs no lines for request
+					if (req != NULL) {
+						req->unlock();
+						req = NULL;
+					}
 					req = moses->que.front();
 					moses->que.pop();
 					
@@ -643,12 +645,7 @@ answer_to_connection (void *cls, struct MHD_Connection *connection, const char *
 		req = new SuggestionRequest(translated, covered, sentence);
 		log = "suggestion ||| " + string(translated) + " ||| " + string(covered) + " ||| " + string(sentence);
 		SuggestionRequest *sug_req = dynamic_cast<SuggestionRequest*>(req);
-		//TODO zkontrolovat
-		if(sug_req->is_input_correct()){
-			page = moses->get_translation(req);
-		}else{
-			status_code = 400;
-		}
+		page = moses->get_translation(req);
 		delete dynamic_cast<SuggestionRequest*> (req);
 	}else if(status_code == 200){
 		status_code = 400;
