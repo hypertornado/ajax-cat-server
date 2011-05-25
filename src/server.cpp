@@ -152,10 +152,6 @@ public:
 		cout << timestr() << " " << s << endl;
 	}
 
-	static void clear_logs(){
-		system("rm tmp/log.txt");
-	}
-
 };
 
 class RawRequest : public Request {
@@ -524,7 +520,7 @@ public:
 		
 		Logger::log("Starting thread " + name);
 		
-		string str = "rm tmp/"+name+"_out.fifo; mkfifo tmp/"+name+"_out.fifo";
+		string str = "rm tmp/"+name+"_out.fifo 2>/dev/null; mkfifo tmp/"+name+"_out.fifo";
 		system(str.c_str());
 		str = mosesPath+" -f "+path+" -n-best-list - 100 distinct -include-alignment-in-n-best true -continue-partial-translation true > tmp/"+name+"_out.fifo 2>/dev/null";
 		
@@ -694,10 +690,9 @@ void * uri_logger(void * cls, const char * uri){
 }
 
 int main (){
-	Logger::clear_logs();
 	Logger::log("Starting server.");
 
-	system("mkdir tmp");
+	system("mkdir tmp 2>/dev/null");
 	
 	fstream file;
 	file.open("server.ini",ios::in|ios::out);
