@@ -208,7 +208,7 @@ private:
 	string results[MAX_SUGGESTIONS];
 	int translated_size;
 public:
-	SuggestionRequest(string _translated, string _covered, string _sentence) : Request(""){
+	SuggestionRequest(string _translated, string _covered, string _sentence) : Request(_sentence){
 		it = 0;
 		max_results = MAX_SUGGESTIONS;
 		
