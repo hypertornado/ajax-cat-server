@@ -414,6 +414,7 @@ public:
 	
 
 	string get_result_table(){
+		print_table();
 		string ret = "";
 		ret += "{\"source\":[";
 		for(int i = 0; i < source.size(); ++i){
@@ -656,6 +657,7 @@ answer_to_connection (void *cls, struct MHD_Connection *connection, const char *
 	struct MHD_Response *response;
 	int ret;
 	response = MHD_create_response_from_data (strlen(page.c_str()), strdup(page.c_str()), MHD_YES, 0);
+	MHD_add_response_header(response,"Access-Control-Allow-Origin","*");
 	ret = MHD_queue_response (connection, status_code, response);
 	MHD_destroy_response (response);
 	
