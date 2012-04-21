@@ -404,6 +404,14 @@ public:
 				cout << "(";
 				if(used_trans[i][j] != NULL){
 					cout << used_trans[i][j]->get_phrase_text();
+					cout << " t_s:";
+					cout << used_trans[i][j]->t_s;
+					cout << " t_e:";
+					cout << used_trans[i][j]->t_e;
+					cout << " s_s:";
+					cout << used_trans[i][j]->s_s;
+					cout << " s_e:";
+					cout << used_trans[i][j]->s_e;
 				}
 				cout << ")";
 			}
