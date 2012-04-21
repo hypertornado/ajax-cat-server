@@ -307,7 +307,7 @@ vector<string> target;
 	string get_length(){
 		//return t_e - t_s + 1;
 		std::ostringstream str;
-		str << t_e - t_s + 1;
+		str << s_e - s_s + 1;
 		return str.str();
 	}
 		
