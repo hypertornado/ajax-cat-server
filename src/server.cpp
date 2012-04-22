@@ -531,7 +531,7 @@ public:
 		
 		string str = "rm tmp/"+name+"_out.fifo 2>/dev/null; mkfifo tmp/"+name+"_out.fifo";
 		system(str.c_str());
-		str = mosesPath+" -f "+path+" -n-best-list - 100 distinct -include-alignment-in-n-best true -continue-partial-translation true > tmp/"+name+"_out.fifo 2>/dev/null";
+		str = mosesPath+" -f "+path+" -n-best-list - 300 distinct -include-alignment-in-n-best true -continue-partial-translation true > tmp/"+name+"_out.fifo 2>/dev/null";
 		
 		file = popen(str.c_str(), "w");
 		
