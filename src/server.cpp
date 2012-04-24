@@ -738,6 +738,10 @@ int main (){
 	pthread_create(&c_thread, NULL, control_thread, (void *)t );
 	
 	//getchar();
+
+	sem_t sem;
+	sem_init(&sem, 0, 0);
+	sem_wait(&sem);
 	
 	return 0;
 }
