@@ -737,7 +737,7 @@ int main (){
 	long t = 0;
 	pthread_create(&c_thread, NULL, control_thread, (void *)t );
 	
-	getchar();
+	//getchar();
 	
 	return 0;
 }
